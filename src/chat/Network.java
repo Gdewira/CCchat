@@ -21,9 +21,15 @@ import org.json.JSONObject;
  * @author CIA
  */
 public class Network implements Runnable {
-    
+
     @Override
     public void run() {
+        while (true) {
+            this.loop();
+        }
+    }
+
+    public void loop() {
         while (true) {
             try {
                 Thread.sleep(10);
@@ -33,9 +39,10 @@ public class Network implements Runnable {
                     body.put("command", SCommand.COMMAND_NAME[sc.getType()]);
                     body.put("params", sc.getJsonobject());
                     body.put("ttl", sc.getTtl());
+                    System.out.println("propate:" + SCommand.COMMAND_NAME[sc.getType()]);
                     this.send(body);
                 }
-            }  catch (Exception e) {                
+            } catch (Exception e) {
                 Logger.getLogger(Executor.class.getName()).log(Level.SEVERE, null, e);
             }
         }
@@ -44,11 +51,12 @@ public class Network implements Runnable {
     public void send(JSONObject body) {
         for (Map.Entry pair : Server.server.serverList.entrySet()) {
             JSONObject o = (JSONObject) pair.getValue();
+//            System.out.println(o);
             if (o.getString("sessionid").equals("")) {
             } else {
                 HttpURLConnection connection = null;
                 try {
-                    System.out.println("Propate " + body.getString("command") + " to " + o.getString("ip") + ":" + o.getString("http_port"));
+//                    System.out.println("Propate " + body.getString("command") + " to " + o.getString("ip") + ":" + o.getString("http_port"));
                     URL url = new URL("http", o.getString("ip"), Integer.parseInt(o.getString("http_port")), "/");
 
                     body.getJSONObject("params").put("ssessionid", o.getString("sessionid"));
@@ -58,6 +66,7 @@ public class Network implements Runnable {
                             "application/json");
                     connection.setUseCaches(false);
                     connection.setDoOutput(true);
+                    connection.setConnectTimeout(5000);
                     DataOutputStream wr = new DataOutputStream(
                             connection.getOutputStream());
                     wr.write(body.toString().getBytes());
@@ -72,6 +81,7 @@ public class Network implements Runnable {
                     }
                     rd.close();
                     JSONObject responsejson = new JSONObject(response.toString());
+//                    System.out.println(responsejson);
                 } catch (Exception e) {
                     Logger.getLogger(Executor.class.getName()).log(Level.SEVERE, null, e);
                 } finally {
